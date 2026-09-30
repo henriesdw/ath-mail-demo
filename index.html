@@ -1,0 +1,722 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>ATH Mail-Assistent</title>
+<style>
+:root{
+  --bg:#f3f5f8; --karte:#fff; --text:#18212b; --leise:#5d6876; --linie:#dfe4ea;
+  --haupt:#14395e; --haupt-hell:#e7eef6; --akzent:#d98a1f;
+  --gruen:#1d7a4c; --gruen-hell:#e3f3ea; --rot:#b42318; --rot-hell:#fdecea;
+  --blau:#2563a8; --blau-hell:#e6effa; --orange:#b45309; --orange-hell:#fff3e0;
+  --radius:10px; --schatten:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);
+}
+*{box-sizing:border-box}
+html,:root,:root[data-theme]{color-scheme:light !important}
+html,body{margin:0;height:100%}
+body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;font-size:15px;color:var(--text);background:var(--bg)}
+button,input,select,textarea{font:inherit;color:inherit}
+input,select,textarea{background:#fff;color:var(--text);color-scheme:light}
+::placeholder{color:#8a94a3}
+button{cursor:pointer}
+.versteckt{display:none!important}
+
+/* Kopfzeile */
+header{display:flex;align-items:center;gap:14px;padding:10px 18px;background:var(--haupt);color:#fff}
+.logo{width:38px;height:38px;border-radius:8px;background:#fff;color:var(--haupt);display:grid;place-items:center;font-weight:800;letter-spacing:.5px;font-size:13px}
+.titel{font-weight:700;font-size:18px;line-height:1.1}
+.titel small{display:block;font-weight:400;font-size:12.5px;opacity:.8}
+header .raum{flex:1}
+.stand{font-size:13px;opacity:.85;text-align:right}
+.knopf{border:1px solid var(--linie);background:#fff;border-radius:8px;padding:8px 14px;font-weight:600;display:inline-flex;align-items:center;gap:8px}
+.knopf:hover{background:#f7f9fb}
+.knopf.haupt{background:var(--haupt);border-color:var(--haupt);color:#fff}
+.knopf.haupt:hover{background:#0f2d4b}
+.knopf.gross{padding:12px 20px;font-size:16px}
+.knopf.klein{padding:5px 10px;font-size:13px}
+.knopf.gefahr{color:var(--rot)}
+.knopf:disabled{opacity:.55;cursor:default}
+header .knopf{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.25);color:#fff}
+header .knopf:hover{background:rgba(255,255,255,.22)}
+header .knopf.akzent{background:var(--akzent);border-color:var(--akzent)}
+.sicher{background:#fff8e8;border-bottom:1px solid #f1dfb4;color:#6b4a0c;font-size:13.5px;padding:7px 18px}
+
+/* Hauptbereich */
+main{display:grid;grid-template-columns:230px 400px 1fr;height:calc(100vh - 124px)}
+nav{border-right:1px solid var(--linie);background:#fff;overflow:auto;padding:12px 8px}
+nav .gruppe{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--leise);padding:12px 10px 6px}
+.filter{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;padding:8px 10px;border-radius:8px;text-align:left}
+.filter:hover{background:#f2f5f8}
+.filter.aktiv{background:var(--haupt-hell);color:var(--haupt);font-weight:600}
+.filter .punkt{width:10px;height:10px;border-radius:50%;flex:none}
+.filter .zahl{margin-left:auto;font-size:12.5px;color:var(--leise);font-weight:600}
+.filter.aktiv .zahl{color:var(--haupt)}
+
+.liste{border-right:1px solid var(--linie);overflow:auto;background:var(--bg)}
+.suche{position:sticky;top:0;z-index:2;background:var(--bg);padding:12px 12px 8px}
+.suche input{width:100%;padding:9px 12px;border:1px solid var(--linie);border-radius:8px;background:#fff}
+.kacheln{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 12px 10px}
+.kachel{background:#fff;border-radius:8px;padding:8px 10px;box-shadow:var(--schatten);border:0;text-align:left}
+.kachel b{display:block;font-size:20px}
+.kachel span{font-size:12px;color:var(--leise)}
+.kachel.rot b{color:var(--rot)} .kachel.blau b{color:var(--blau)} .kachel.gruen b{color:var(--gruen)}
+.tag{font-size:12px;font-weight:700;color:var(--leise);padding:10px 16px 4px;text-transform:uppercase;letter-spacing:.05em}
+.eintrag{display:block;width:calc(100% - 20px);margin:0 10px 8px;text-align:left;background:#fff;border:1px solid transparent;border-radius:var(--radius);box-shadow:var(--schatten);padding:10px 12px 10px 14px;position:relative;overflow:hidden}
+.eintrag::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--kat,#999)}
+.eintrag:hover{border-color:#c9d3de}
+.eintrag.aktiv{border-color:var(--haupt);box-shadow:0 0 0 2px var(--haupt-hell)}
+.eintrag.erledigt{opacity:.6}
+.z1{display:flex;gap:8px;align-items:baseline}
+.von{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
+.eintrag.ungelesen .von::after{content:"";display:inline-block;width:8px;height:8px;background:var(--blau);border-radius:50%;margin-left:6px;vertical-align:middle}
+.zeit{font-size:12.5px;color:var(--leise);white-space:nowrap}
+.betreff{font-size:14px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kurz{font-size:13px;color:var(--leise);margin-top:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+.chip{font-size:11.5px;font-weight:600;border-radius:20px;padding:2px 8px;background:#eef1f5;color:#394553;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.chip.kat{color:#fff;background:var(--kat)}
+.chip.dringend{background:var(--rot-hell);color:var(--rot)}
+.chip.entwurf{background:var(--blau-hell);color:var(--blau)}
+.chip.handy{background:var(--gruen-hell);color:var(--gruen)}
+.chip.geaendert{background:var(--orange-hell);color:var(--orange)}
+.leer{padding:40px 20px;text-align:center;color:var(--leise)}
+
+/* Detail */
+.detail{overflow:auto;background:#fff}
+.detail-innen{max-width:860px;margin:0 auto;padding:22px 26px 60px}
+.zurueck{display:none}
+.d-kopf h2{margin:0 0 6px;font-size:21px;line-height:1.3}
+.d-von{color:var(--leise);font-size:14px}
+.d-von b{color:var(--text)}
+.d-leiste{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px 0}
+.kat-wahl{font-size:13px;color:var(--leise);display:inline-flex;align-items:center;gap:6px}
+.d-leiste select{padding:7px 10px;border:1px solid var(--linie);border-radius:8px;background:#fff}
+.infos{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 16px}
+.info{border:1px solid var(--linie);border-radius:8px;padding:6px 10px;font-size:13.5px;background:#fafbfc;cursor:pointer;max-width:100%}
+.info small{display:block;font-size:11px;color:var(--leise);text-transform:uppercase;letter-spacing:.04em}
+.info:hover{border-color:var(--haupt)}
+.zf{background:var(--haupt-hell);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:14.5px}
+.zf small{font-weight:700;color:var(--haupt);display:block;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
+
+.entwurf-box{border:2px solid var(--blau);border-radius:12px;overflow:hidden;margin-bottom:22px}
+.entwurf-box.handy{border-color:var(--gruen)}
+.e-kopf{display:flex;align-items:center;gap:10px;background:var(--blau-hell);padding:10px 14px;font-weight:700;color:var(--blau)}
+.entwurf-box.handy .e-kopf{background:var(--gruen-hell);color:var(--gruen)}
+.e-kopf .quelle{margin-left:auto;font-size:12px;font-weight:600;opacity:.85}
+.e-feld{display:flex;align-items:center;border-bottom:1px solid var(--linie)}
+.e-feld label{width:78px;padding:0 14px;font-size:13px;color:var(--leise);flex:none}
+.e-feld input:focus,.e-text:focus{background:#fffdf5}
+.e-feld input{flex:1;border:0;background:#fff;color:var(--text);padding:10px 14px 10px 0;outline:none;min-width:0}
+.e-text{display:block;width:100%;border:0;background:#fff;color:var(--text);padding:14px;min-height:260px;resize:vertical;outline:none;line-height:1.5;font-size:15px}
+.platzhalter{background:var(--orange-hell);color:var(--orange);font-size:13.5px;padding:8px 14px;border-top:1px solid #f5d9ad}
+.e-aktionen{display:flex;flex-wrap:wrap;gap:8px;padding:12px 14px;border-top:1px solid var(--linie);background:#fafbfc;align-items:center}
+.e-aktionen .raum{flex:1}
+.erfolg{background:var(--gruen-hell);color:#14532d;padding:12px 14px;font-size:14px;border-top:1px solid #bfe3cd;line-height:1.5}
+.kein-entwurf{border:1px dashed #c3ccd6;border-radius:12px;padding:16px;margin-bottom:22px;color:var(--leise)}
+.kein-entwurf .knopfe{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.original h3{font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--leise);margin:0 0 8px}
+.original pre{white-space:pre-wrap;word-wrap:break-word;font-family:inherit;font-size:14.5px;line-height:1.55;margin:0;background:#fafbfc;border:1px solid var(--linie);border-radius:10px;padding:14px 16px}
+.anhaenge{font-size:13.5px;color:var(--leise);margin:8px 0 0}
+.nichts{height:100%;display:grid;place-items:center;color:var(--leise);text-align:center;padding:30px}
+.nichts div{max-width:420px;line-height:1.6}
+.nichts b{display:block;font-size:18px;color:var(--text);margin-bottom:6px}
+
+/* Einrichtung */
+.einrichtung{max-width:760px;margin:30px auto;padding:0 16px}
+.karte{background:#fff;border-radius:14px;box-shadow:var(--schatten);padding:22px 24px;margin-bottom:16px}
+.karte h2{margin:0 0 6px;font-size:20px}
+.karte p{color:var(--leise);line-height:1.55;margin:6px 0 12px}
+.wahl{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.wahl button{border:2px solid var(--linie);background:#fff;border-radius:12px;padding:16px;text-align:left}
+.wahl button:hover,.wahl button.aktiv{border-color:var(--haupt);background:var(--haupt-hell)}
+.wahl b{display:block;font-size:16px;margin-bottom:4px}
+.wahl span{font-size:13px;color:var(--leise)}
+.formular label{display:block;font-size:13px;font-weight:600;margin:12px 0 4px}
+.formular input,.formular select,.formular textarea{width:100%;padding:9px 12px;border:1px solid var(--linie);border-radius:8px;background:#fff}
+.formular .tipp{font-size:12.5px;color:var(--leise);margin-top:4px;line-height:1.45}
+.formular .reihe{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.check{display:flex;gap:10px;align-items:flex-start;margin:12px 0 4px;font-size:14px;font-weight:400!important}
+.check input{width:auto;margin-top:3px}
+.code{font-size:34px;font-weight:800;letter-spacing:.12em;text-align:center;padding:16px;border:2px dashed var(--haupt);border-radius:12px;margin:12px 0;color:var(--haupt);user-select:all}
+.meldung{padding:10px 12px;border-radius:8px;margin-top:12px;font-size:14px}
+.meldung.fehler{background:var(--rot-hell);color:var(--rot)}
+.meldung.ok{background:var(--gruen-hell);color:var(--gruen)}
+
+/* Einstellungen */
+.dialog-hg{position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;justify-content:center;align-items:flex-start;padding:30px 12px;overflow:auto;z-index:20}
+.dialog{background:#fff;border-radius:14px;max-width:640px;width:100%;padding:22px 24px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.dialog h2{margin:0 0 4px}
+.dialog h3{margin:22px 0 2px;font-size:15px;color:var(--haupt);border-top:1px solid var(--linie);padding-top:16px}
+.dialog-fuss{display:flex;gap:8px;justify-content:flex-end;margin-top:22px}
+
+/* Laden & Hinweise */
+.ladebalken{position:fixed;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--akzent),transparent);background-size:50% 100%;animation:lauf 1.1s linear infinite;z-index:30}
+@keyframes lauf{from{background-position:-50% 0}to{background-position:150% 0}}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;padding:11px 18px;border-radius:10px;font-size:14px;z-index:40;max-width:90vw;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.toast.fehler{background:var(--rot)}
+
+/* Schmale Bildschirme (Tablet / Handy) */
+@media (max-width:1100px){
+  main{grid-template-columns:200px 1fr}
+  .detail{position:fixed;inset:0;z-index:15;display:none}
+  .detail.offen{display:block}
+  .zurueck{display:inline-flex;margin-bottom:12px}
+}
+@media (max-width:720px){
+  header{padding:8px 12px;gap:10px}
+  .stand{display:none}
+  .titel small{display:none}
+  header .txt{display:none}
+  header .knopf{padding:8px 12px;font-size:17px}
+  .titel{white-space:nowrap}
+  .sicher{font-size:12.5px;padding:6px 12px}
+  body{overflow-x:hidden}
+  main{grid-template-columns:1fr;height:auto}
+  nav{display:flex;overflow-x:auto;gap:6px;padding:8px;border-right:0;border-bottom:1px solid var(--linie)}
+  nav .gruppe{display:none}
+  .filter{white-space:nowrap;width:auto;border:1px solid var(--linie)}
+  .liste{border-right:0;min-height:calc(100vh - 150px)}
+  .wahl,.formular .reihe{grid-template-columns:1fr}
+  .detail-innen{padding:16px 14px 60px}
+}
+
+body{background:var(--bg);color:var(--text)}
+.demo{background:#0f2d4b;color:#e7eef6;font-size:13px;padding:6px 18px}
+@media (max-width:720px){.demo{font-size:12px;padding:6px 12px}}
+</style>
+</head>
+<body>
+
+
+<div id="laden" class="ladebalken versteckt"></div>
+<header>
+  <div class="logo">ATH</div>
+  <div class="titel">Mail-Assistent<small id="konto">–</small></div>
+  <div class="raum"></div>
+  <div class="stand" id="stand"></div>
+  <button class="knopf akzent versteckt" id="btn-aktualisieren" onclick="aktualisieren()" title="Aktualisieren">⟳<span class="txt"> Aktualisieren</span></button>
+  <button class="knopf" id="btn-einstellungen" onclick="einstellungenOeffnen()" title="Einstellungen">⚙<span class="txt"> Einstellungen</span></button>
+</header>
+<div class="demo"><b>Demo mit Beispielmails.</b> Im echten Programm liest das Tool das ATH-Postfach und legt die Entwürfe wirklich in den Entwürfe-Ordner.</div>
+<div class="sicher">🔒 Dieses Programm verschickt <b>niemals</b> selbst Mails. Entwürfe landen auf Knopfdruck in Ihrem Ordner <b>„Entwürfe“</b> – dort prüfen und selbst senden (auch am Handy).</div>
+
+<div id="ansicht-einrichtung" class="einrichtung versteckt"></div>
+
+<main id="ansicht-haupt" class="versteckt">
+  <nav id="filter"></nav>
+  <section class="liste">
+    <div class="suche"><input id="suche" type="search" placeholder="Suchen (Name, Betreff, Text) …" oninput="listeZeichnen()"></div>
+    <div class="kacheln" id="kacheln"></div>
+    <div id="eintraege"></div>
+  </section>
+  <section class="detail" id="detail"><div class="nichts"><div><b>Mail auswählen</b>Links eine Mail anklicken. Wo ein Entwurf vorbereitet ist, sehen Sie ihn oben und können ihn mit einem Klick in Ihre Entwürfe legen.</div></div></section>
+</main>
+
+<div id="dialog" class="dialog-hg versteckt" onclick="if(event.target===this)dialogZu()"><div class="dialog formular" id="dialog-inhalt"></div></div>
+
+<script>
+// ---- Demo-Modus: simuliert das lokale Programm im Browser, ohne Postfach ----
+window.confirm = () => true;
+const DEMO = {"mails": [{"id": "imap:547462939:115", "von_name": "Sabine Krüger", "von_email": "sabine.krueger@gmx.de", "antwort_an": "", "an": "kontakt@ath-abdichtungen.de", "betreff": "Feuchter Keller – Anfrage", "datum": "2026-09-29T11:05:02Z", "text": "Hallo Herr Merten,\r\n\r\nwir haben seit dem letzten Starkregen im Keller eine feuchte Wand, unten ca. 40 cm hoch mit weißen Ausblühungen. Es riecht auch etwas muffig.\r\nKönnten Sie sich das einmal anschauen und uns ein Angebot machen?\r\n\r\nDas Haus ist in der Lindenstraße 12, 22926 Ahrensburg.\r\nSie erreichen mich unter 0171 2345678.\r\n\r\nViele Grüße\r\nSabine Krüger\r\n", "hat_anhang": false, "anhaenge": [], "newsletter": false, "gelesen": false, "analyse": {"kategorie": "kunde", "prioritaet": "normal", "zusammenfassung": "Wir haben seit dem letzten Starkregen im Keller eine feuchte Wand, unten ca. 40 cm hoch mit weißen Ausblühungen. Es riecht auch etwas muffig. Könnten Sie sich das einmal anschauen und uns ein Angebot …", "infos": [{"typ": "telefon", "label": "Telefon", "wert": "0171 2345678"}, {"typ": "adresse", "label": "Adresse", "wert": "Lindenstraße 12, 22926 Ahrensburg"}], "mahnung": false, "formular": {"email": "", "name": "", "telefon": ""}, "punkte": {"kunde": 34.0}}, "erledigt": false, "entwurf": {"art": "antwort", "an": "sabine.krueger@gmx.de", "cc": "", "betreff": "AW: Feuchter Keller – Anfrage", "text": "Guten Tag Frau Krüger,\n\nvielen Dank für Ihre Anfrage und Ihr Interesse an ATH Abdichtungen.\n\nDamit ich mir schnell ein erstes Bild machen kann, schicken Sie mir bitte ein paar Fotos:\n– die betroffene Stelle aus der Nähe und mit etwas Abstand\n– die Wand bzw. den Bereich von außen, mit dem Gelände/Pflaster davor\n– falls vorhanden: Lichtschacht, Kellerfenster oder Anschlüsse in der Nähe\n\nIch melde mich dann telefonisch bei Ihnen unter 0171 2345678. Wann sind Sie am besten erreichbar?\n\nMit freundlichen Grüßen\n\nDirk Merten\nATH Abdichtungen GmbH & Co. KG\nAm Schüberg 30 · 22949 Ammersbek\nTel. 0160 5563525\nkontakt@ath-abdichtungen.de", "quelle": "vorlage", "status": "auf_handy", "postfach_id": "", "geaendert": "2026-09-29T13:05:13.200262", "abgelegt": "2026-09-29T13:05:13Z"}, "varianten": {"antwort": {"art": "antwort", "an": "sabine.krueger@gmx.de", "cc": "", "betreff": "AW: Feuchter Keller – Anfrage", "text": "Guten Tag Sabine Krüger,\n\nvielen Dank für Ihre Anfrage und Ihr Interesse an ATH Abdichtungen.\n\nDamit ich mir schnell ein erstes Bild machen kann, schicken Sie mir bitte ein paar Fotos:\n– die betroffene Stelle aus der Nähe und mit etwas Abstand\n– die Wand bzw. den Bereich von außen, mit dem Gelände/Pflaster davor\n– falls vorhanden: Lichtschacht, Kellerfenster oder Anschlüsse in der Nähe\n\nIch melde mich dann telefonisch bei Ihnen unter 0171 2345678. Wann sind Sie am besten erreichbar?\n\nMit freundlichen Grüßen\n\nDirk Merten\nATH Abdichtungen GmbH & Co. KG\nAm Schüberg 30 · 22949 Ammersbek\nTel. 0160 5563525\nkontakt@ath-abdichtungen.de", "quelle": "vorlage", "status": "neu", "postfach_id": ""}, "weiterleitung": {"art": "weiterleitung", "an": "m.hansen@hansen-steuer.de", "cc": "", "betreff": "WG: Feuchter Keller – Anfrage", "text": "Guten Tag Frau Hansen,\n\nanbei die Rechnung von Sabine Krüger vom 29.09.2026 zur Buchung.\n\nMit freundlichen Grüßen\n\nDirk Merten\nATH Abdichtungen GmbH & Co. KG\nAm Schüberg 30 · 22949 Ammersbek\nTel. 0160 5563525\nkontakt@ath-abdichtungen.de", "quelle": "vorlage", "status": "neu", "postfach_id": ""}}, "standard_art": "antwort"}, {"id": "imap:547462939:116", "von_name": "IONOS Kontaktformular", "von_email": "noreply@ionos.de", "antwort_an": "", "an": "kontakt@ath-abdichtungen.de", "betreff": "Neue Nachricht über Ihr Kontaktformular", "datum": "2026-09-29T08:05:02Z", "text": "Sie haben eine neue Nachricht über das Kontaktformular Ihrer Website erhalten.\r\n\r\nName: Thomas Becker\r\nE-Mail: t.becker@web.de\r\nTelefon: 040 6543210\r\nNachricht: Guten Tag, bei uns läuft bei Regen Wasser durch den Lichtschacht ins Kellerfenster. Was würde eine Abdichtung ungefähr kosten?\r\n", "hat_anhang": false, "anhaenge": [], "newsletter": false, "gelesen": false, "analyse": {"kategorie": "kunde", "prioritaet": "normal", "zusammenfassung": "Thomas Becker: Guten Tag, bei uns läuft bei Regen Wasser durch den Lichtschacht ins Kellerfenster. Was würde eine Abdichtung ungefähr kosten?", "infos": [{"typ": "telefon", "label": "Telefon", "wert": "040 6543210"}], "mahnung": false, "formular": {"email": "t.becker@web.de", "name": "Thomas Becker", "telefon": "040 6543210"}, "punkte": {"kunde": 28.0}}, "erledigt": false, "entwurf": {"art": "antwort", "an": "t.becker@web.de", "cc": "", "betreff": "AW: Neue Nachricht über Ihr Kontaktformular", "text": "Guten Tag Thomas Becker,\n\nvielen Dank für Ihre Anfrage und Ihr Interesse an ATH Abdichtungen.\n\nDamit ich mir schnell ein erstes Bild machen kann, schicken Sie mir bitte ein paar Fotos:\n– die betroffene Stelle aus der Nähe und mit etwas Abstand\n– die Wand bzw. den Bereich von außen, mit dem Gelände/Pflaster davor\n– falls vorhanden: Lichtschacht, Kellerfenster oder Anschlüsse in der Nähe\n\nIch melde mich dann telefonisch bei Ihnen unter 040 6543210. Wann passt es Ihnen [Tag]?\nWo befindet sich das Objekt (Straße, Ort)?\n\nMit freundlichen Grüßen\n\nDirk Merten\nATH Abdichtungen GmbH & Co. KG\nAm Schüberg 30 · 22949 Ammersbek\nTel. 0160 5563525\nkontakt@ath-abdichtungen.de", "quelle": "vorlage", "status": "neu", "postfach_id": "", "geaendert": "2026-09-29T13:05:39.158476", "abgelegt": "2026-09-29T13:05:39Z"}, "varianten": {"antwort": {"art": "antwort", "an": "t.becker@web.de", "cc": "", "betreff": "AW: Neue Nachricht über Ihr Kontaktformular", "text": "Guten Tag Thomas Becker,\n\nvielen Dank für Ihre Anfrage und Ihr Interesse an ATH Abdichtungen.\n\nDamit ich mir schnell ein erstes Bild machen kann, schicken Sie mir bitte ein paar Fotos:\n– die betroffene Stelle aus der Nähe und mit etwas Abstand\n– die Wand bzw. den Bereich von außen, mit dem Gelände/Pflaster davor\n– falls vorhanden: Lichtschacht, Kellerfenster oder Anschlüsse in der Nähe\n\nIch melde mich dann telefonisch bei Ihnen unter 040 6543210. Wann sind Sie am besten erreichbar?\nWo befindet sich das Objekt (Straße, Ort)?\n\nMit freundlichen Grüßen\n\nDirk Merten\nATH Abdichtungen GmbH & Co. KG\nAm Schüberg 30 · 22949 Ammersbek\nTel. 0160 5563525\nkontakt@ath-abdichtungen.de", "quelle": "vorlage", "status": "neu", "postfach_id": ""}, "weiterleitung": {"art": "weiterleitung", "an": "m.hansen@hansen-steuer.de", "cc": "", "betreff": "WG: Neue Nachricht über Ihr Kontaktformular", "text": "Guten Tag Frau Hansen,\n\nanbei die Rechnung von IONOS Kontaktformular vom 29.09.2026 zur Buchung.\n\nMit freundlichen Grüßen\n\nDirk Merten\nATH Abdichtungen GmbH & Co. KG\nAm Schüberg 30 · 22949 Ammersbek\nTel. 0160 5563525\nkontakt@ath-abdichtungen.de", "quelle": "vorlage", "status": "neu", "postfach_id": ""}}, "standard_art": "antwort"}, {"id": "imap:547462939:123", "von_name": "Hornbach Profi", "von_email": "newsletter@hornbach.de", "antwort_an": "", "an": "kontakt@ath-abdichtungen.de", "betreff": "Nur diese Woche: 20 % auf Dichtschlämme", "datum": "2026-09-29T05:05:02Z", "text": "Jetzt sichern! Nur für kurze Zeit 20 % auf alle Abdichtungsprodukte. Newsletter abbestellen.\r\n", "hat_anhang": false, "anhaenge": [], "newsletter": true, "gelesen": false, "analyse": {"kategorie": "werbung", "prioritaet": "niedrig", "zusammenfassung": "Jetzt sichern! Nur für kurze Zeit 20 % auf alle Abdichtungsprodukte. Newsletter abbestellen.", "infos": [], "mahnung": false, "formular": {"email": "", "name": "", "telefon": ""}, "punkte": {"kunde": 1.2, "werbung": 49.0}}, "erledigt": false, "entwurf": null, "varianten": {"antwort": {"art": "antwort", "an": "newsletter@hornbach.de", "cc": "", "betreff": "AW: Nur diese Woche: 20 % auf Dichtschlämme", "text": "Guten Tag Hornbach Profi,\n\nvielen Dank für Ihre Nachricht.\n\n[Antwort ergänzen]\n\nMit freundlichen Grüßen\n\nDirk Merten\nATH Abdichtungen GmbH & Co. KG\nAm Schüberg 30 · 22949 Ammersbek\nTel. 0160 5563525\nkontakt@ath-abdichtungen.de", "quelle": "vorlage", "status": "neu", "postfach_id": ""}, "weiterleitung": {"art": "weiterleitung", "an": "m.hansen@hansen-steuer.de", "cc": "", "betreff": "WG: Nur diese Woche: 20 % auf Dichtschlämme", "text": "Guten Tag Frau Hansen,\n\nanbei die Rechnung von Hornbach Profi vom 29.09.2026 zur Buchung.\n\nMit freundlichen Grüßen\n\nDirk Merten\nATH Abdichtungen GmbH & Co. KG\nAm Schüberg 30 · 22949 Ammersbek\nTel. 0160 5563525\nkontakt@ath-abdichtungen.de", "quelle": "vorlage", "status": "neu", "postfach_id": ""}}, "standard_art": "antwort"}, {"id": "imap:547462939:117", "von_name": "Kanzlei Hansen Steuerberatung", "von_email": "m.hansen@hansen-steuer.de", "antwort_an": "", "an": "kontakt@ath-abdichtungen.de", "betreff": "Fehlende Belege Q3 / Umsatzsteuervoranmeldung", "datum": "2026-09-28T17:05:02Z", "text": "Sehr geehrter Herr Merten,\r\n\r\nfür die Umsatzsteuervoranmeldung Q3 fehlen uns noch die Belege und Kontoauszüge für August und September.\r\nBitte senden Sie uns diese bis zum 10.10. zu, damit wir die Frist einhalten können.\r\n\r\nMit freundlichen Grüßen\r\nMaren Hansen\r\nSteuerberaterin\r\n", "hat_anhang": false, "anhaenge": [], "newsletter": false, "gelesen": false, "analyse": {"kategorie": "steuerberater", "prioritaet": "dringend", "zusammenfassung": "Für die Umsatzsteuervoranmeldung Q3 fehlen uns noch die Belege und Kontoauszüge für August und September. Bitte senden Sie uns diese bis zum 10.10. zu, damit wir die Frist einhalten können.", "infos": [{"typ": "frist", "label": "Frist", "wert": "10.10.2026"}], "mahnung": false, "formular": {"email": "", "name": "", "telefon": ""}, "punkte": {"steuerberater": 68.0}}, "erledigt": false, "entwurf": {"art": "antwort", "an": "m.hansen@hansen-steuer.de", "cc": "", "betreff": "AW: Fehlende Belege Q3 / Umsatzsteuervoranmeldung", "text": "Guten Tag Frau Hansen,\n\nvielen Dank für Ihre Nachricht. Die angeforderten Unterlagen stelle ich zusammen und sende sie Ihnen bis spätestens [Datum] zu.\n\n[Falls etwas unklar ist: Rückfrage hier ergänzen]\n\nMit freundlichen Grüßen\n\nDirk Merten\nATH Abdichtungen GmbH & Co. KG\nAm Schüberg 30 · 22949 Ammersbek\nTel. 0160 5563525\nkontakt@ath-abdichtungen.de", "quelle": "vorlage", "status": "neu", "postfach_id": "", "geaendert": "2026-09-29T13:05:11.773726"}, "varianten": {"antwort": {"art": "antwort", "an": "m.hansen@hansen-steuer.de", "cc": "", "betreff": "AW: Fehlende Belege Q3 / Umsatzsteuervoranmeldung", "text": "Guten Tag Frau Hansen,\n\nvielen Dank für Ihre Nachricht. Die angeforderten Unterlagen stelle ich zusammen und sende sie Ihnen bis spätestens [Datum] zu.\n\n[Falls etwas unklar ist: Rückfrage hier ergänzen]\n\nMit freundlichen Grüßen\n\nDirk Merten\nATH Abdichtungen GmbH & Co. KG\nAm Schüberg 30 · 22949 Ammersbek\nTel. 0160 5563525\nkontakt@ath-abdichtungen.de", "quelle": "vorlage", "status": "neu", "postfach_id": ""}, "weiterleitung": {"art": "weiterleitung", "an": "m.hansen@hansen-steuer.de", "cc": "", "betreff": "WG: Fehlende Belege Q3 / Umsatzsteuervoranmeldung", "text": "Guten Tag Frau Hansen,\n\nanbei die Rechnung von Kanzlei Hansen Steuerberatung vom 28.09.2026 zur Buchung.\n\nMit freundlichen Grüßen\n\nDirk Merten\nATH Abdichtungen GmbH & Co. KG\nAm Schüberg 30 · 22949 Ammersbek\nTel. 0160 5563525\nkontakt@ath-abdichtungen.de", "quelle": "vorlage", "status": "neu", "postfach_id": ""}}, "standard_art": "antwort"}, {"id": "imap:547462939:118", "von_name": "Finanzamt Stormarn", "von_email": "poststelle@fa-stormarn.landsh.de", "antwort_an": "", "an": "kontakt@ath-abdichtungen.de", "betreff": "Bescheid über Vorauszahlungen zur Gewerbesteuer", "datum": "2026-09-28T11:05:02Z", "text": "Sehr geehrte Damen und Herren,\r\n\r\nanbei erhalten Sie den Bescheid über die Festsetzung von Vorauszahlungen. Aktenzeichen: 30/123/45678.\r\nEin Einspruch ist innerhalb eines Monats möglich.\r\n", "hat_anhang": true, "anhaenge": ["Bescheid.pdf"], "newsletter": false, "gelesen": false, "analyse": {"kategorie": "behoerde", "prioritaet": "normal", "zusammenfassung": "Anbei erhalten Sie den Bescheid über die Festsetzung von Vorauszahlungen. Aktenzeichen: 30/123/45678. Ein Einspruch ist innerhalb eines Monats möglich.", "infos": [{"typ": "nummer", "label": "Aktenzeichen", "wert": "30/123/45678"}, {"typ": "anhang", "label": "Anhang", "wert": "Bescheid.pdf"}], "mahnung": false, "formular": {"email": "", "name": "", "telefon": ""}, "punkte": {"behoerde": 29.0}}, "erledigt": false, "entwurf": {"art": "weiterleitung", "an": "m.hansen@hansen-steuer.de", "cc": "", "betreff": "WG: Bescheid über Vorauszahlungen zur Gewerbesteuer", "text": "Guten Tag Frau Hansen,\n\nanbei ein Schreiben von Finanzamt Stormarn vom 28.09.2026 zur Kenntnis.\n\nKönnten Sie das bitte prüfen und mir sagen, ob ich etwas tun muss?\n\nMit freundlichen Grüßen\n\nDirk Merten\nATH Abdichtungen GmbH & Co. KG\nAm Schüberg 30 · 22949 Ammersbek\nTel. 0160 5563525\nkontakt@ath-abdichtungen.de", "quelle": "vorlage", "status": "neu", "postfach_id": "", "geaendert": "2026-09-29T13:05:11.773988"}, "varianten": {"antwort": {"art": "antwort", "an": "poststelle@fa-stormarn.landsh.de", "cc": "", "betreff": "AW: Bescheid über Vorauszahlungen zur Gewerbesteuer", "text": "Guten Tag,\n\nvielen Dank für Ihre Nachricht.\n\n[Antwort ergänzen]\n\nMit freundlichen Grüßen\n\nDirk Merten\nATH Abdichtungen GmbH & Co. KG\nAm Schüberg 30 · 22949 Ammersbek\nTel. 0160 5563525\nkontakt@ath-abdichtungen.de", "quelle": "vorlage", "status": "neu", "postfach_id": ""}, "weiterleitung": {"art": "weiterleitung", "an": "m.hansen@hansen-steuer.de", "cc": "", "betreff": "WG: Bescheid über Vorauszahlungen zur Gewerbesteuer", "text": "Guten Tag Frau Hansen,\n\nanbei ein Schreiben von Finanzamt Stormarn vom 28.09.2026 zur Kenntnis.\n\nKönnten Sie das bitte prüfen und mir sagen, ob ich etwas tun muss?\n\nMit freundlichen Grüßen\n\nDirk Merten\nATH Abdichtungen GmbH & Co. KG\nAm Schüberg 30 · 22949 Ammersbek\nTel. 0160 5563525\nkontakt@ath-abdichtungen.de", "quelle": "vorlage", "status": "neu", "postfach_id": ""}}, "standard_art": "weiterleitung"}, {"id": "imap:547462939:119", "von_name": "Baustoffe Nord GmbH", "von_email": "rechnung@baustoffe-nord.de", "antwort_an": "", "an": "kontakt@ath-abdichtungen.de", "betreff": "Ihre Rechnung Nr. RE-2026-4411", "datum": "2026-09-28T07:05:02Z", "text": "Sehr geehrter Kunde,\r\n\r\nanbei erhalten Sie Ihre Rechnung Nr. RE-2026-4411 über 1.284,60 € für die Lieferung vom 22.09.\r\nZahlbar bis 14.10.2026 ohne Abzug.\r\n", "hat_anhang": true, "anhaenge": ["RE-2026-4411.pdf"], "newsletter": false, "gelesen": false, "analyse": {"kategorie": "rechnung", "prioritaet": "normal", "zusammenfassung": "Anbei erhalten Sie Ihre Rechnung Nr. RE-2026-4411 über 1.284,60 € für die Lieferung vom 22.09. Zahlbar bis 14.10.2026 ohne Abzug.", "infos": [{"typ": "frist", "label": "Frist", "wert": "14.10.2026"}, {"typ": "betrag", "label": "Betrag", "wert": "1.284,60 €"}, {"typ": "nummer", "label": "Rechnungs-Nr.", "wert": "RE-2026-4411"}, {"typ": "anhang", "label": "Anhang", "wert": "RE-2026-4411.pdf"}], "mahnung": false, "formular": {"email": "", "name": "", "telefon": ""}, "punkte": {"rechnung": 18.0, "lieferant": 4.0}}, "erledigt": false, "entwurf": {"art": "weiterleitung", "an": "m.hansen@hansen-steuer.de", "cc": "", "betreff": "WG: Ihre Rechnung Nr. RE-2026-4411", "text": "Guten Tag Frau Hansen,\n\nanbei die Rechnung von Baustoffe Nord GmbH vom 28.09.2026 (Nr. RE-2026-4411) über 1.284,60 € zur Buchung.\n\nMit freundlichen Grüßen\n\nDirk Merten\nATH Abdichtungen GmbH & Co. KG\nAm Schüberg 30 · 22949 Ammersbek\nTel. 0160 5563525\nkontakt@ath-abdichtungen.de", "quelle": "vorlage", "status": "neu", "postfach_id": ""}, "varianten": {"antwort": {"art": "antwort", "an": "rechnung@baustoffe-nord.de", "cc": "", "betreff": "AW: Ihre Rechnung Nr. RE-2026-4411", "text": "Guten Tag,\n\nvielen Dank für Ihre Zahlungserinnerung zur Rechnung RE-2026-4411. Ich prüfe den Vorgang umgehend.\n\n[Entweder:] Der offene Betrag wird bis zum [Datum] überwiesen.\n[Oder:] Die Zahlung ist bereits am [Datum] erfolgt – bitte prüfen Sie den Zahlungseingang.\n\nMit freundlichen Grüßen\n\nDirk Merten\nATH Abdichtungen GmbH & Co. KG\nAm Schüberg 30 · 22949 Ammersbek\nTel. 0160 5563525\nkontakt@ath-abdichtungen.de", "quelle": "vorlage", "status": "neu", "postfach_id": ""}, "weiterleitung": {"art": "weiterleitung", "an": "m.hansen@hansen-steuer.de", "cc": "", "betreff": "WG: Ihre Rechnung Nr. RE-2026-4411", "text": "Guten Tag Frau Hansen,\n\nanbei die Rechnung von Baustoffe Nord GmbH vom 28.09.2026 (Nr. RE-2026-4411) über 1.284,60 € zur Buchung.\n\nMit freundlichen Grüßen\n\nDirk Merten\nATH Abdichtungen GmbH & Co. KG\nAm Schüberg 30 · 22949 Ammersbek\nTel. 0160 5563525\nkontakt@ath-abdichtungen.de", "quelle": "vorlage", "status": "neu", "postfach_id": ""}}, "standard_art": "weiterleitung"}, {"id": "imap:547462939:120", "von_name": "Werkzeug Müller KG", "von_email": "buchhaltung@werkzeug-mueller.de", "antwort_an": "", "an": "kontakt@ath-abdichtungen.de", "betreff": "2. Zahlungserinnerung Rechnung 88213", "datum": "2026-09-27T17:05:02Z", "text": "Sehr geehrter Herr Merten,\r\n\r\nleider konnten wir zur Rechnung 88213 über 349,90 € noch keinen Zahlungseingang feststellen.\r\nWir bitten um Ausgleich bis zum 03.10.2026.\r\n\r\nFreundliche Grüße\r\nBuchhaltung Werkzeug Müller\r\n", "hat_anhang": false, "anhaenge": [], "newsletter": false, "gelesen": false, "analyse": {"kategorie": "rechnung", "prioritaet": "dringend", "zusammenfassung": "Leider konnten wir zur Rechnung 88213 über 349,90 € noch keinen Zahlungseingang feststellen. Wir bitten um Ausgleich bis zum 03.10.2026.", "infos": [{"typ": "frist", "label": "Frist", "wert": "03.10.2026"}, {"typ": "betrag", "label": "Betrag", "wert": "349,90 €"}, {"typ": "nummer", "label": "Rechnungs-Nr.", "wert": "88213"}], "mahnung": true, "formular": {"email": "", "name": "", "telefon": ""}, "punkte": {"steuerberater": 3.0, "rechnung": 27.0}}, "erledigt": false, "entwurf": {"art": "antwort", "an": "buchhaltung@werkzeug-mueller.de", "cc": "", "betreff": "AW: 2. Zahlungserinnerung Rechnung 88213", "text": "Guten Tag,\n\nvielen Dank für Ihre Zahlungserinnerung zur Rechnung 88213. Ich prüfe den Vorgang umgehend.\n\n[Entweder:] Der offene Betrag wird bis zum [Datum] überwiesen.\n[Oder:] Die Zahlung ist bereits am [Datum] erfolgt – bitte prüfen Sie den Zahlungseingang.\n\nMit freundlichen Grüßen\n\nDirk Merten\nATH Abdichtungen GmbH & Co. KG\nAm Schüberg 30 · 22949 Ammersbek\nTel. 0160 5563525\nkontakt@ath-abdichtungen.de", "quelle": "vorlage", "status": "neu", "postfach_id": "", "geaendert": "2026-09-29T13:05:11.774593"}, "varianten": {"antwort": {"art": "antwort", "an": "buchhaltung@werkzeug-mueller.de", "cc": "", "betreff": "AW: 2. Zahlungserinnerung Rechnung 88213", "text": "Guten Tag,\n\nvielen Dank für Ihre Zahlungserinnerung zur Rechnung 88213. Ich prüfe den Vorgang umgehend.\n\n[Entweder:] Der offene Betrag wird bis zum [Datum] überwiesen.\n[Oder:] Die Zahlung ist bereits am [Datum] erfolgt – bitte prüfen Sie den Zahlungseingang.\n\nMit freundlichen Grüßen\n\nDirk Merten\nATH Abdichtungen GmbH & Co. KG\nAm Schüberg 30 · 22949 Ammersbek\nTel. 0160 5563525\nkontakt@ath-abdichtungen.de", "quelle": "vorlage", "status": "neu", "postfach_id": ""}, "weiterleitung": {"art": "weiterleitung", "an": "m.hansen@hansen-steuer.de", "cc": "", "betreff": "WG: 2. Zahlungserinnerung Rechnung 88213", "text": "Guten Tag Frau Hansen,\n\nanbei die Rechnung von Werkzeug Müller KG vom 27.09.2026 (Nr. 88213) über 349,90 € zur Buchung.\n\nMit freundlichen Grüßen\n\nDirk Merten\nATH Abdichtungen GmbH & Co. KG\nAm Schüberg 30 · 22949 Ammersbek\nTel. 0160 5563525\nkontakt@ath-abdichtungen.de", "quelle": "vorlage", "status": "neu", "postfach_id": ""}}, "standard_art": "antwort"}, {"id": "imap:547462939:121", "von_name": "Provinzial Schadenservice", "von_email": "schaden@provinzial.de", "antwort_an": "", "an": "kontakt@ath-abdichtungen.de", "betreff": "Schadennummer 77-4431-2026 – Ihr Kostenvoranschlag", "datum": "2026-09-27T11:05:02Z", "text": "Guten Tag Herr Merten,\r\n\r\nzum oben genannten Schadenfall (Versicherungsnehmer Fam. Wolter) benötigen wir noch Fotos der Schadensstelle sowie einen detaillierten Kostenvoranschlag.\r\n\r\nMit freundlichen Grüßen\r\nJan Petersen, Schadenregulierung\r\n", "hat_anhang": false, "anhaenge": [], "newsletter": false, "gelesen": false, "analyse": {"kategorie": "versicherung", "prioritaet": "normal", "zusammenfassung": "Zum oben genannten Schadenfall (Versicherungsnehmer Fam. Wolter) benötigen wir noch Fotos der Schadensstelle sowie einen detaillierten Kostenvoranschlag.", "infos": [{"typ": "nummer", "label": "Schaden-Nr.", "wert": "77-4431-2026"}], "mahnung": false, "formular": {"email": "", "name": "", "telefon": ""}, "punkte": {"kunde": 12.0, "versicherung": 37.0}}, "erledigt": false, "entwurf": {"art": "antwort", "an": "schaden@provinzial.de", "cc": "", "betreff": "AW: Schadennummer 77-4431-2026 – Ihr Kostenvoranschlag", "text": "Guten Tag,\n\nvielen Dank für Ihre Nachricht zum Schadenfall 77-4431-2026.\n\n[Gewünschte Unterlagen (Fotos, Bericht, Angebot) nennen bzw. anhängen] Für Rückfragen oder einen gemeinsamen Termin vor Ort stehe ich gerne zur Verfügung.\n\nMit freundlichen Grüßen\n\nDirk Merten\nATH Abdichtungen GmbH & Co. KG\nAm Schüberg 30 · 22949 Ammersbek\nTel. 0160 5563525\nkontakt@ath-abdichtungen.de", "quelle": "vorlage", "status": "neu", "postfach_id": "", "geaendert": "2026-09-29T13:05:11.774891"}, "varianten": {"antwort": {"art": "antwort", "an": "schaden@provinzial.de", "cc": "", "betreff": "AW: Schadennummer 77-4431-2026 – Ihr Kostenvoranschlag", "text": "Guten Tag,\n\nvielen Dank für Ihre Nachricht zum Schadenfall 77-4431-2026.\n\n[Gewünschte Unterlagen (Fotos, Bericht, Angebot) nennen bzw. anhängen] Für Rückfragen oder einen gemeinsamen Termin vor Ort stehe ich gerne zur Verfügung.\n\nMit freundlichen Grüßen\n\nDirk Merten\nATH Abdichtungen GmbH & Co. KG\nAm Schüberg 30 · 22949 Ammersbek\nTel. 0160 5563525\nkontakt@ath-abdichtungen.de", "quelle": "vorlage", "status": "neu", "postfach_id": ""}, "weiterleitung": {"art": "weiterleitung", "an": "m.hansen@hansen-steuer.de", "cc": "", "betreff": "WG: Schadennummer 77-4431-2026 – Ihr Kostenvoranschlag", "text": "Guten Tag Frau Hansen,\n\nanbei die Rechnung von Provinzial Schadenservice vom 27.09.2026 (Nr. 77-4431-2026) zur Buchung.\n\nMit freundlichen Grüßen\n\nDirk Merten\nATH Abdichtungen GmbH & Co. KG\nAm Schüberg 30 · 22949 Ammersbek\nTel. 0160 5563525\nkontakt@ath-abdichtungen.de", "quelle": "vorlage", "status": "neu", "postfach_id": ""}}, "standard_art": "antwort"}, {"id": "imap:547462939:122", "von_name": "Peter Wolter", "von_email": "p.wolter@t-online.de", "antwort_an": "", "an": "kontakt@ath-abdichtungen.de", "betreff": "Termin Besichtigung", "datum": "2026-09-27T01:05:02Z", "text": "Hallo Herr Merten,\r\n\r\npasst Ihnen der 02.10. um 15 Uhr für die Besichtigung bei uns? Alternativ ginge auch nächste Woche Montag.\r\n\r\nGruß Peter Wolter\r\n", "hat_anhang": false, "anhaenge": [], "newsletter": false, "gelesen": false, "analyse": {"kategorie": "termin", "prioritaet": "normal", "zusammenfassung": "Passt Ihnen der 02.10. um 15 Uhr für die Besichtigung bei uns? Alternativ ginge auch nächste Woche Montag.", "infos": [{"typ": "termin", "label": "Termin", "wert": "02.10.2026 um 15:00 Uhr"}], "mahnung": false, "formular": {"email": "", "name": "", "telefon": ""}, "punkte": {"kunde": 2.0, "termin": 18.0}}, "erledigt": false, "entwurf": {"art": "antwort", "an": "p.wolter@t-online.de", "cc": "", "betreff": "AW: Termin Besichtigung", "text": "Guten Tag Peter Wolter,\n\nvielen Dank. Den Termin am 02.10.2026 um 15:00 Uhr bestätige ich gerne.\n\n[Falls es nicht passt: Alternativvorschlag eintragen]\n\nMit freundlichen Grüßen\n\nDirk Merten\nATH Abdichtungen GmbH & Co. KG\nAm Schüberg 30 · 22949 Ammersbek\nTel. 0160 5563525\nkontakt@ath-abdichtungen.de", "quelle": "vorlage", "status": "neu", "postfach_id": "", "geaendert": "2026-09-29T13:05:11.775345"}, "varianten": {"antwort": {"art": "antwort", "an": "p.wolter@t-online.de", "cc": "", "betreff": "AW: Termin Besichtigung", "text": "Guten Tag Peter Wolter,\n\nvielen Dank. Den Termin am 02.10.2026 um 15:00 Uhr bestätige ich gerne.\n\n[Falls es nicht passt: Alternativvorschlag eintragen]\n\nMit freundlichen Grüßen\n\nDirk Merten\nATH Abdichtungen GmbH & Co. KG\nAm Schüberg 30 · 22949 Ammersbek\nTel. 0160 5563525\nkontakt@ath-abdichtungen.de", "quelle": "vorlage", "status": "neu", "postfach_id": ""}, "weiterleitung": {"art": "weiterleitung", "an": "m.hansen@hansen-steuer.de", "cc": "", "betreff": "WG: Termin Besichtigung", "text": "Guten Tag Frau Hansen,\n\nanbei die Rechnung von Peter Wolter vom 27.09.2026 zur Buchung.\n\nMit freundlichen Grüßen\n\nDirk Merten\nATH Abdichtungen GmbH & Co. KG\nAm Schüberg 30 · 22949 Ammersbek\nTel. 0160 5563525\nkontakt@ath-abdichtungen.de", "quelle": "vorlage", "status": "neu", "postfach_id": ""}}, "standard_art": "antwort"}, {"id": "imap:547462939:124", "von_name": "Amazon Business", "von_email": "versandbestaetigung@amazon.de", "antwort_an": "", "an": "kontakt@ath-abdichtungen.de", "betreff": "Ihre Bestellung wurde versendet", "datum": "2026-09-26T15:05:02Z", "text": "Ihre Bestellung 302-1234567 wurde versendet. Sendungsverfolgung: DHL.\r\n", "hat_anhang": false, "anhaenge": [], "newsletter": false, "gelesen": false, "analyse": {"kategorie": "lieferant", "prioritaet": "normal", "zusammenfassung": "Ihre Bestellung 302-1234567 wurde versendet. Sendungsverfolgung: DHL.", "infos": [], "mahnung": false, "formular": {"email": "", "name": "", "telefon": ""}, "punkte": {"lieferant": 38.0}}, "erledigt": false, "entwurf": null, "varianten": {"antwort": {"art": "antwort", "an": "versandbestaetigung@amazon.de", "cc": "", "betreff": "AW: Ihre Bestellung wurde versendet", "text": "Guten Tag Amazon Business,\n\nvielen Dank für die Information.\n\n[Bestätigung / Liefertermin / Anlieferadresse ergänzen]\n\nMit freundlichen Grüßen\n\nDirk Merten\nATH Abdichtungen GmbH & Co. KG\nAm Schüberg 30 · 22949 Ammersbek\nTel. 0160 5563525\nkontakt@ath-abdichtungen.de", "quelle": "vorlage", "status": "neu", "postfach_id": ""}, "weiterleitung": {"art": "weiterleitung", "an": "m.hansen@hansen-steuer.de", "cc": "", "betreff": "WG: Ihre Bestellung wurde versendet", "text": "Guten Tag Frau Hansen,\n\nanbei die Rechnung von Amazon Business vom 26.09.2026 zur Buchung.\n\nMit freundlichen Grüßen\n\nDirk Merten\nATH Abdichtungen GmbH & Co. KG\nAm Schüberg 30 · 22949 Ammersbek\nTel. 0160 5563525\nkontakt@ath-abdichtungen.de", "quelle": "vorlage", "status": "neu", "postfach_id": ""}}, "standard_art": "antwort"}], "einstellungen": {"ms_client_id": "", "ms_tenant_id": "", "imap_anbieter": "andere", "imap_host": "127.0.0.1", "imap_port": 1143, "imap_ssl": false, "imap_benutzer": "dirk@test.de", "imap_entwuerfe": "", "absender_email": "kontakt@ath-abdichtungen.de", "absender_name": "Dirk Merten", "telefon": "0160 5563525", "signatur": "Mit freundlichen Grüßen\n\nDirk Merten\nATH Abdichtungen GmbH & Co. KG\nAm Schüberg 30 · 22949 Ammersbek\nTel. 0160 5563525\nkontakt@ath-abdichtungen.de", "steuerberater_name": "Frau Hansen", "steuerberater_email": "m.hansen@hansen-steuer.de", "ki_aktiv": false, "ki_modell": "claude-sonnet-5-5", "tage_zurueck": 21, "max_mails": 150, "auto_handy": false}, "kategorien": {"kunde": {"label": "Kundenanfrage", "farbe": "#1d7a4c"}, "steuerberater": {"label": "Steuerberater", "farbe": "#6b3fa0"}, "behoerde": {"label": "Finanzamt & Behörden", "farbe": "#a1452b"}, "rechnung": {"label": "Rechnung & Zahlung", "farbe": "#b7791f"}, "versicherung": {"label": "Versicherung", "farbe": "#2b6cb0"}, "termin": {"label": "Termin", "farbe": "#0f7b8a"}, "lieferant": {"label": "Lieferant & Material", "farbe": "#5a6b2f"}, "sonstiges": {"label": "Sonstiges", "farbe": "#5b6472"}, "werbung": {"label": "Werbung & Newsletter", "farbe": "#9aa1ab"}}, "reihenfolge": ["kunde", "steuerberater", "behoerde", "rechnung", "versicherung", "termin", "lieferant", "sonstiges", "werbung"]};
+(function () {
+  const neuste = Math.max(...DEMO.mails.map(m => Date.parse(m.datum)));
+  const versatz = Date.now() - 45 * 60000 - neuste;
+  DEMO.mails.forEach(m => { m.datum = new Date(Date.parse(m.datum) + versatz).toISOString(); });
+})();
+const D = {
+  mails: Object.fromEntries(DEMO.mails.map(m => [m.id, m])),
+  einstellungen: DEMO.einstellungen,
+  stand: new Date().toISOString(),
+};
+function kurz(m) {
+  const a = m.analyse || {}, e = m.entwurf;
+  return {id: m.id, von_name: m.von_name, von_email: m.von_email, betreff: m.betreff, datum: m.datum,
+    gelesen: m.gelesen, hat_anhang: m.hat_anhang, kategorie: a.kategorie, prioritaet: a.prioritaet,
+    zusammenfassung: a.zusammenfassung, infos: a.infos || [], erledigt: m.erledigt,
+    entwurf_status: e ? e.status : null, entwurf_art: e ? e.art : null};
+}
+function status() {
+  return {version: "1.0 Demo", konto_typ: "microsoft", konto: "kontakt@ath-abdichtungen.de · Demo mit Beispielmails",
+    kategorien: DEMO.kategorien, reihenfolge: DEMO.reihenfolge, letzte_aktualisierung: D.stand,
+    job: {laeuft: false, schritt: "", fehler: "", fertig: 1, neu: 0}, einstellungen: D.einstellungen,
+    ki_schluessel_gesetzt: false, imap_anbieter: {}, ms_anmeldung: {status: "ok"}};
+}
+const NUR_ECHT = {fehler: "In der Demo nicht verfügbar – das geht nur im echten Programm auf dem Rechner."};
+const DEMO_API = {
+  "/api/status": () => status(),
+  "/api/liste": () => ({mails: Object.values(D.mails).map(kurz).sort((a, b) => b.datum.localeCompare(a.datum)), ...status()}),
+  "/api/mail": d => { const m = D.mails[d.id]; return {mail: {...kurz(m), text: m.text, an: m.an, antwort_an: m.antwort_an, anhaenge: m.anhaenge, entwurf: m.entwurf}}; },
+  "/api/aktualisieren": () => { D.stand = new Date().toISOString(); return {ok: true}; },
+  "/api/entwurf/speichern": d => {
+    const m = D.mails[d.id];
+    const e = m.entwurf || {art: "antwort", status: "neu", quelle: "hand", an: "", betreff: "", text: ""};
+    ["an", "cc", "betreff", "text"].forEach(k => { if (k in d) e[k] = d[k]; });
+    e.status = e.status === "auf_handy" ? "geaendert" : e.status === "neu" ? "bearbeitet" : e.status;
+    m.entwurf = e; return {entwurf: e};
+  },
+  "/api/entwurf/neu": d => {
+    const m = D.mails[d.id];
+    const art = d.art || m.standard_art;
+    if (d.quelle === "ki") return NUR_ECHT;
+    const v = m.varianten[art] || m.varianten.antwort;
+    if (!v) return {fehler: "Für diese Mail gibt es in der Demo keine Vorlage."};
+    const war = m.entwurf && m.entwurf.status === "auf_handy";
+    m.entwurf = {...v, status: war ? "geaendert" : "neu"}; return {entwurf: m.entwurf};
+  },
+  "/api/entwurf/keiner": d => { D.mails[d.id].entwurf = null; return {ok: true}; },
+  "/api/entwurf/handy": d => {
+    if (d.entwurf) DEMO_API["/api/entwurf/speichern"]({...d.entwurf, id: d.id});
+    const e = D.mails[d.id].entwurf; e.status = "auf_handy"; return {entwurf: e};
+  },
+  "/api/kategorie": d => { const a = D.mails[d.id].analyse; a.kategorie = d.kategorie; if (d.kategorie === "werbung") a.prioritaet = "niedrig"; return {ok: true}; },
+  "/api/erledigt": d => { D.mails[d.id].erledigt = !!d.erledigt; return {ok: true}; },
+  "/api/einstellungen": d => {
+    ["absender_name", "telefon", "signatur", "steuerberater_name", "steuerberater_email", "tage_zurueck", "max_mails", "auto_handy", "ki_aktiv", "ki_modell"].forEach(k => { if (k in d) D.einstellungen[k] = d[k]; });
+    return status();
+  },
+  "/api/ki/test": () => NUR_ECHT, "/api/ms/start": () => NUR_ECHT, "/api/ms/browser": () => NUR_ECHT,
+  "/api/ms/status": () => ({anmeldung: {status: "ok"}}), "/api/imap/verbinden": () => NUR_ECHT,
+  "/api/abmelden": () => NUR_ECHT,
+};
+window.fetch = async (pfad, opt) => {
+  const f = DEMO_API[pfad];
+  const daten = opt && opt.body ? JSON.parse(opt.body) : {};
+  await new Promise(r => setTimeout(r, pfad === "/api/entwurf/handy" ? 500 : 60));
+  const j = f ? JSON.parse(JSON.stringify(f(daten))) : {fehler: "unbekannt"};
+  return {json: async () => j};
+};
+
+
+const ZUGANG = "demo";
+let S = {mails: [], kategorien: {}, reihenfolge: [], einstellungen: {}};
+let filter = "offen", aktiveId = null, aktiveMail = null, speichernTimer = null, pollTimer = null;
+
+// ---------------------------------------------------------------- Hilfen
+async function api(pfad, daten) {
+  const r = await fetch(pfad, {method: "POST", headers: {"Content-Type": "application/json", "X-Zugang": ZUGANG}, body: JSON.stringify(daten || {})});
+  const j = await r.json();
+  if (j.anmelden) { await statusLaden(); zeigeEinrichtung(); }
+  if (j.fehler) throw new Error(j.fehler);
+  return j;
+}
+function esc(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function $(id) { return document.getElementById(id); }
+let toastT;
+function toast(text, fehler) {
+  document.querySelectorAll(".toast").forEach(t => t.remove());
+  const t = document.createElement("div"); t.className = "toast" + (fehler ? " fehler" : ""); t.textContent = text;
+  document.body.appendChild(t); clearTimeout(toastT); toastT = setTimeout(() => t.remove(), fehler ? 7000 : 3500);
+}
+function laden(an) { $("laden").classList.toggle("versteckt", !an); }
+function kat(k) { return S.kategorien[k] || {label: k, farbe: "#888"}; }
+function zeitText(iso) {
+  if (!iso) return "";
+  const d = new Date(iso), h = new Date();
+  const gestern = new Date(); gestern.setDate(h.getDate() - 1);
+  const uhr = d.toLocaleTimeString("de-DE", {hour: "2-digit", minute: "2-digit"});
+  if (d.toDateString() === h.toDateString()) return uhr;
+  if (d.toDateString() === gestern.toDateString()) return "gestern " + uhr;
+  return d.toLocaleDateString("de-DE", {day: "2-digit", month: "2-digit"}) + " " + uhr;
+}
+function tagText(iso) {
+  const d = new Date(iso), h = new Date(); const g = new Date(); g.setDate(h.getDate() - 1);
+  if (d.toDateString() === h.toDateString()) return "Heute";
+  if (d.toDateString() === g.toDateString()) return "Gestern";
+  return d.toLocaleDateString("de-DE", {weekday: "long", day: "2-digit", month: "2-digit"});
+}
+const INFO_ICON = {telefon: "📞", adresse: "📍", frist: "⏰", termin: "📅", betrag: "€", nummer: "#", anhang: "📎"};
+function entwurfChip(m) {
+  if (!m.entwurf_status) return "";
+  if (m.entwurf_status === "auf_handy") return '<span class="chip handy">📱 In Entwürfen</span>';
+  if (m.entwurf_status === "geaendert") return '<span class="chip geaendert">✎ Geändert – neu ablegen</span>';
+  return '<span class="chip entwurf">✉ Entwurf bereit</span>';
+}
+
+// ---------------------------------------------------------------- Laden
+async function statusLaden() {
+  const j = await api("/api/status");
+  Object.assign(S, j);
+  kopfZeichnen();
+  return j;
+}
+async function listeLaden() {
+  const j = await api("/api/liste");
+  Object.assign(S, j);
+  kopfZeichnen(); filterZeichnen(); listeZeichnen();
+}
+function kopfZeichnen() {
+  $("konto").textContent = S.konto ? S.konto : "Kein Postfach verbunden";
+  const hat = !!S.konto_typ;
+  $("btn-aktualisieren").classList.toggle("versteckt", !hat);
+  const job = S.job || {};
+  if (job.laeuft) { $("stand").textContent = job.schritt || "Lädt …"; laden(true); }
+  else { laden(false); $("stand").textContent = S.letzte_aktualisierung ? "Stand: " + zeitText(S.letzte_aktualisierung) : ""; }
+  $("btn-aktualisieren").disabled = !!job.laeuft;
+}
+
+async function aktualisieren(still) {
+  try {
+    await api("/api/aktualisieren");
+    laden(true);
+    clearInterval(pollTimer);
+    pollTimer = setInterval(async () => {
+      const j = await statusLaden();
+      if (!j.job.laeuft) {
+        clearInterval(pollTimer);
+        await listeLaden();
+        if (j.job.fehler) toast(j.job.fehler, true);
+        else if (!still) toast(j.job.neu ? `${j.job.neu} neue Mail(s) ausgewertet.` : "Alles aktuell – keine neuen Mails.");
+        if (aktiveId) mailOeffnen(aktiveId, true);
+      }
+    }, 1200);
+  } catch (e) { toast(e.message, true); }
+}
+
+// ---------------------------------------------------------------- Filter & Liste
+function passt(m, f) {
+  if (f === "offen") return !m.erledigt && m.kategorie !== "werbung";
+  if (f === "dringend") return !m.erledigt && m.prioritaet === "dringend";
+  if (f === "entwurf") return !m.erledigt && !!m.entwurf_status && m.entwurf_status !== "auf_handy";
+  if (f === "erledigt") return !!m.erledigt;
+  if (f === "alle") return true;
+  return m.kategorie === f && (!m.erledigt || f === "werbung");
+}
+function filterZeichnen() {
+  const z = f => S.mails.filter(m => passt(m, f)).length;
+  const knopf = (f, text, farbe) => `<button class="filter ${filter === f ? "aktiv" : ""}" onclick="filterSetzen('${f}')">${farbe ? `<span class="punkt" style="background:${farbe}"></span>` : ""}${esc(text)}<span class="zahl">${z(f) || ""}</span></button>`;
+  let h = '<div class="gruppe">Übersicht</div>' + knopf("offen", "📥 Zu erledigen") + knopf("dringend", "❗ Dringend") + knopf("entwurf", "✉ Entwurf bereit");
+  h += '<div class="gruppe">Themen</div>';
+  for (const k of S.reihenfolge) h += knopf(k, kat(k).label, kat(k).farbe);
+  h += '<div class="gruppe">Archiv</div>' + knopf("erledigt", "✓ Erledigt") + knopf("alle", "Alle Mails");
+  $("filter").innerHTML = h;
+  const offen = S.mails.filter(m => passt(m, "offen"));
+  $("kacheln").innerHTML =
+    `<button class="kachel rot" onclick="filterSetzen('dringend')"><b>${z("dringend")}</b><span>dringend</span></button>` +
+    `<button class="kachel blau" onclick="filterSetzen('entwurf')"><b>${z("entwurf")}</b><span>Entwürfe bereit</span></button>` +
+    `<button class="kachel gruen" onclick="filterSetzen('kunde')"><b>${offen.filter(m => m.kategorie === "kunde").length}</b><span>Kundenanfragen</span></button>`;
+}
+function filterSetzen(f) { filter = f; filterZeichnen(); listeZeichnen(); }
+function listeZeichnen() {
+  const q = $("suche").value.trim().toLowerCase();
+  let mails = S.mails.filter(m => passt(m, filter));
+  if (q) mails = mails.filter(m => [m.von_name, m.von_email, m.betreff, m.zusammenfassung].join(" ").toLowerCase().includes(q));
+  if (!mails.length) {
+    $("eintraege").innerHTML = `<div class="leer">${S.mails.length ? "Hier ist gerade nichts. 👍" : "Noch keine Mails geladen – oben auf „Aktualisieren“ klicken."}</div>`;
+    return;
+  }
+  let h = "", letzterTag = "";
+  for (const m of mails) {
+    const t = tagText(m.datum);
+    if (t !== letzterTag) { h += `<div class="tag">${esc(t)}</div>`; letzterTag = t; }
+    const k = kat(m.kategorie);
+    const infos = (m.infos || []).filter(i => ["telefon", "adresse", "frist", "termin", "betrag"].includes(i.typ)).slice(0, 2)
+      .map(i => `<span class="chip">${INFO_ICON[i.typ] || ""} ${esc(i.wert)}</span>`).join("");
+    h += `<button class="eintrag ${m.id === aktiveId ? "aktiv" : ""} ${m.gelesen ? "" : "ungelesen"} ${m.erledigt ? "erledigt" : ""}" style="--kat:${k.farbe}" onclick="mailOeffnen('${esc(m.id)}')">
+      <div class="z1"><span class="von">${esc(m.von_name || m.von_email)}</span><span class="zeit">${m.hat_anhang ? "📎 " : ""}${esc(zeitText(m.datum))}</span></div>
+      <div class="betreff">${esc(m.betreff)}</div>
+      <div class="kurz">${esc(m.zusammenfassung)}</div>
+      <div class="chips"><span class="chip kat" style="--kat:${k.farbe}">${esc(k.label)}</span>${m.prioritaet === "dringend" ? '<span class="chip dringend">Dringend</span>' : ""}${entwurfChip(m)}${infos}</div>
+    </button>`;
+  }
+  $("eintraege").innerHTML = h;
+}
+
+// ---------------------------------------------------------------- Detail
+async function mailOeffnen(id, still) {
+  aktiveId = id;
+  if (!still) listeZeichnen();
+  try {
+    const j = await api("/api/mail", {id});
+    aktiveMail = j.mail;
+    detailZeichnen();
+    $("detail").classList.add("offen");
+  } catch (e) { toast(e.message, true); }
+}
+function detailSchliessen() { $("detail").classList.remove("offen"); }
+function detailZeichnen() {
+  const m = aktiveMail; if (!m) return;
+  const k = kat(m.kategorie);
+  const optionen = S.reihenfolge.map(x => `<option value="${x}" ${x === m.kategorie ? "selected" : ""}>${esc(kat(x).label)}</option>`).join("");
+  const infos = (m.infos || []).map(i => `<div class="info" title="Klicken zum Kopieren" data-wert="${esc(i.wert)}" onclick="kopieren(this.dataset.wert)"><small>${esc(i.label)}</small>${INFO_ICON[i.typ] || ""} ${esc(i.wert)}</div>`).join("");
+  let h = `<div class="detail-innen">
+    <button class="knopf klein zurueck" onclick="detailSchliessen()">← Zurück zur Liste</button>
+    <div class="d-kopf"><h2>${esc(m.betreff)}</h2>
+      <div class="d-von">Von <b>${esc(m.von_name || m.von_email)}</b> &lt;${esc(m.von_email)}&gt; · ${esc(new Date(m.datum).toLocaleString("de-DE", {dateStyle: "full", timeStyle: "short"}))}</div></div>
+    <div class="d-leiste">
+      <span class="chip kat" style="--kat:${k.farbe}">${esc(k.label)}</span>
+      ${m.prioritaet === "dringend" ? '<span class="chip dringend">Dringend</span>' : ""}
+      <label class="kat-wahl">Kategorie ändern <select onchange="kategorieAendern(this.value)">${optionen}</select></label>
+      <span style="flex:1"></span>
+      <button class="knopf klein" onclick="erledigtSetzen(${!m.erledigt})">${m.erledigt ? "↺ Wieder offen" : "✓ Erledigt"}</button>
+    </div>
+    ${m.zusammenfassung ? `<div class="zf"><small>Worum geht's?</small>${esc(m.zusammenfassung)}</div>` : ""}
+    ${infos ? `<div class="infos">${infos}</div>` : ""}
+    ${entwurfHtml(m)}
+    <div class="original"><h3>Original-Mail</h3><pre>${esc(m.text || "(kein Text)")}</pre>
+      ${m.anhaenge && m.anhaenge.length ? `<p class="anhaenge">📎 Anhänge: ${esc(m.anhaenge.join(", "))} – im Postfach öffnen.</p>` : ""}</div>
+  </div>`;
+  $("detail").innerHTML = h;
+  const ta = $("e-text"); if (ta) { autoHoehe(ta); platzhalterPruefen(); }
+}
+function entwurfHtml(m) {
+  const e = m.entwurf;
+  const stb = (S.einstellungen || {}).steuerberater_email;
+  if (!e) {
+    return `<div class="kein-entwurf">Für diese Mail wurde kein Entwurf vorbereitet ${m.kategorie === "werbung" ? "(Werbung)" : ""}.
+      <div class="knopfe"><button class="knopf" onclick="entwurfNeu('antwort')">✉ Antwort-Entwurf erstellen</button>
+      ${stb ? `<button class="knopf" onclick="entwurfNeu('weiterleitung')">↪ An Steuerberater weiterleiten</button>` : ""}</div></div>`;
+  }
+  const handy = e.status === "auf_handy";
+  const titel = e.art === "weiterleitung" ? "↪ Weiterleitung vorbereitet" : "✉ Antwort vorbereitet";
+  const quelle = e.quelle === "ki" ? "geschrieben von KI" : e.quelle === "hand" ? "von Hand" : "aus Vorlage";
+  let knopfText = "📱 In Entwürfe legen (Handy)";
+  if (e.status === "geaendert") knopfText = "📱 Änderungen in Entwürfe übernehmen";
+  if (handy) knopfText = "📱 Erneut ablegen";
+  return `<div class="entwurf-box ${handy ? "handy" : ""}" id="entwurf-box">
+    <div class="e-kopf">${handy ? "✓ Liegt in Ihren Entwürfen" : titel}<span class="quelle">${esc(quelle)}</span></div>
+    <div class="e-feld"><label>An</label><input id="e-an" value="${esc(e.an)}" oninput="entwurfGeaendert()"></div>
+    <div class="e-feld"><label>Betreff</label><input id="e-betreff" value="${esc(e.betreff)}" oninput="entwurfGeaendert()"></div>
+    <textarea class="e-text" id="e-text" oninput="autoHoehe(this);entwurfGeaendert()">${esc(e.text)}</textarea>
+    <div class="platzhalter versteckt" id="platzhalter"></div>
+    ${handy ? `<div class="erfolg"><b>So geht's weiter:</b> Auf dem Handy die Mail-App öffnen → Ordner <b>„Entwürfe“</b> → diesen Entwurf antippen → prüfen/anpassen → <b>selbst senden</b>.${e.art === "weiterleitung" ? " Die Anhänge der Original-Mail hängen bereits dran." : ""}</div>` : ""}
+    <div class="e-aktionen">
+      <button class="knopf haupt gross" id="btn-handy" onclick="aufsHandy()">${knopfText}</button>
+      <span class="raum"></span>
+      <button class="knopf klein" onclick="entwurfNeu()">↻ Neu erstellen</button>
+      ${S.einstellungen.ki_aktiv && S.ki_schluessel_gesetzt ? `<button class="knopf klein" onclick="entwurfNeu(null,'ki')">✨ Mit KI neu</button>` : ""}
+      ${e.art !== "weiterleitung" && stb ? `<button class="knopf klein" onclick="entwurfNeu('weiterleitung')">↪ An Steuerberater</button>` : ""}
+      ${e.art === "weiterleitung" ? `<button class="knopf klein" onclick="entwurfNeu('antwort')">✉ Stattdessen antworten</button>` : ""}
+      <button class="knopf klein gefahr" onclick="keinEntwurf()">✕ Kein Entwurf nötig</button>
+    </div>
+  </div>`;
+}
+function autoHoehe(ta) { ta.style.height = "auto"; ta.style.height = Math.max(260, ta.scrollHeight + 4) + "px"; }
+function platzhalterPruefen() {
+  const t = ($("e-text") || {}).value || "";
+  const n = (t.match(/\[[^\]\n]{1,120}\]/g) || []).length;
+  const el = $("platzhalter"); if (!el) return n;
+  el.classList.toggle("versteckt", !n);
+  el.innerHTML = n ? `⚠ Noch <b>${n}</b> Stelle(n) in [eckigen Klammern] ausfüllen – hier oder später am Handy.` : "";
+  return n;
+}
+function entwurfDaten() { return {an: $("e-an").value, betreff: $("e-betreff").value, text: $("e-text").value}; }
+function entwurfGeaendert() {
+  platzhalterPruefen();
+  clearTimeout(speichernTimer);
+  speichernTimer = setTimeout(async () => {
+    try {
+      const j = await api("/api/entwurf/speichern", {id: aktiveId, ...entwurfDaten()});
+      aktiveMail.entwurf = j.entwurf;
+      const lm = S.mails.find(x => x.id === aktiveId); if (lm) { lm.entwurf_status = j.entwurf.status; listeZeichnen(); filterZeichnen(); }
+      const knopf = $("btn-handy"); if (knopf && j.entwurf.status === "geaendert") knopf.textContent = "📱 Änderungen in Entwürfe übernehmen";
+    } catch (e) { toast(e.message, true); }
+  }, 700);
+}
+async function aufsHandy() {
+  const n = platzhalterPruefen();
+  if (n && !confirm(`Es sind noch ${n} Platzhalter in [eckigen Klammern] offen.\n\nTrotzdem in die Entwürfe legen? (Sie können sie am Handy noch ausfüllen.)`)) return;
+  clearTimeout(speichernTimer);
+  const knopf = $("btn-handy"); knopf.disabled = true; knopf.textContent = "Wird abgelegt …"; laden(true);
+  try {
+    await api("/api/entwurf/handy", {id: aktiveId, entwurf: entwurfDaten()});
+    toast("✓ Liegt jetzt in Ihren Entwürfen – auch auf dem Handy.");
+    await listeLaden(); await mailOeffnen(aktiveId, true);
+  } catch (e) { toast(e.message, true); knopf.disabled = false; knopf.textContent = "📱 In Entwürfe legen (Handy)"; }
+  laden(false);
+}
+async function entwurfNeu(art, quelle) {
+  if (aktiveMail.entwurf && !confirm("Den aktuellen Entwurf durch einen neuen ersetzen?")) return;
+  laden(true);
+  try {
+    const j = await api("/api/entwurf/neu", {id: aktiveId, art, quelle, kategorie: aktiveMail.kategorie});
+    aktiveMail.entwurf = j.entwurf; detailZeichnen(); await listeLaden();
+  } catch (e) { toast(e.message, true); }
+  laden(false);
+}
+async function keinEntwurf() {
+  const e = aktiveMail.entwurf;
+  const text = e && e.postfach_id ? "Entwurf verwerfen? Er wird auch aus Ihrem Entwürfe-Ordner entfernt." : "Entwurf verwerfen?";
+  if (!confirm(text)) return;
+  try { await api("/api/entwurf/keiner", {id: aktiveId}); aktiveMail.entwurf = null; detailZeichnen(); await listeLaden(); }
+  catch (e) { toast(e.message, true); }
+}
+async function kategorieAendern(k) {
+  try {
+    await api("/api/kategorie", {id: aktiveId, kategorie: k});
+    aktiveMail.kategorie = k; await listeLaden(); detailZeichnen();
+    if (!aktiveMail.entwurf && k !== "werbung" && k !== "sonstiges" && confirm("Kategorie geändert. Passenden Entwurf erstellen?")) entwurfNeu();
+  } catch (e) { toast(e.message, true); }
+}
+async function erledigtSetzen(wert) {
+  try {
+    await api("/api/erledigt", {id: aktiveId, erledigt: wert});
+    aktiveMail.erledigt = wert; await listeLaden(); detailZeichnen();
+    toast(wert ? "Als erledigt markiert." : "Wieder offen.");
+  } catch (e) { toast(e.message, true); }
+}
+function kopieren(t) {
+  const fertig = () => toast("Kopiert: " + t);
+  if (navigator.clipboard) navigator.clipboard.writeText(t).then(fertig, fertig); else fertig();
+}
+
+// ---------------------------------------------------------------- Einrichtung
+let einrichtungTyp = "microsoft";
+function zeigeEinrichtung() {
+  $("ansicht-haupt").classList.add("versteckt");
+  $("ansicht-einrichtung").classList.remove("versteckt");
+  const e = S.einstellungen || {};
+  const anbieter = S.imap_anbieter || {};
+  const opt = Object.entries(anbieter).map(([k, v]) => `<option value="${k}" ${k === (e.imap_anbieter || "icloud") ? "selected" : ""}>${esc(v.name)}</option>`).join("");
+  $("ansicht-einrichtung").innerHTML = `
+  <div class="karte">
+    <h2>Postfach verbinden</h2>
+    <p>Einmalig einrichten – danach öffnet sich das Tool direkt mit Ihren Mails. Das Programm liest nur mit und legt Entwürfe ab. <b>Senden kann es nicht.</b></p>
+    <div class="wahl">
+      <button class="${einrichtungTyp === "microsoft" ? "aktiv" : ""}" onclick="einrichtungTyp='microsoft';zeigeEinrichtung()"><b>Microsoft 365 / Outlook</b><span>für kontakt@ath-abdichtungen.de</span></button>
+      <button class="${einrichtungTyp === "imap" ? "aktiv" : ""}" onclick="einrichtungTyp='imap';zeigeEinrichtung()"><b>Anderes Postfach</b><span>iCloud, Gmail, IONOS, GMX, WEB.DE, T-Online …</span></button>
+    </div>
+  </div>
+  <div class="karte formular ${einrichtungTyp === "microsoft" ? "" : "versteckt"}">
+    <h2>Microsoft 365</h2>
+    <p>Die beiden Nummern stammen aus der einmaligen App-Registrierung (siehe Einrichtungsanleitung). Sind sie schon eingetragen, einfach auf „Anmelden“ klicken.</p>
+    <div class="reihe">
+      <div><label>Anwendungs-ID (Client-ID)</label><input id="ms-client" value="${esc(e.ms_client_id || "")}" placeholder="z. B. 1a2b3c4d-…"></div>
+      <div><label>Verzeichnis-ID (Mandanten-ID)</label><input id="ms-tenant" value="${esc(e.ms_tenant_id || "")}" placeholder="z. B. 9f8e7d6c-…"></div>
+    </div>
+    <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <button class="knopf haupt gross" onclick="msBrowser()">Mit Microsoft anmelden</button>
+      <button class="knopf klein" onclick="msStart()" title="Falls die normale Anmeldung nicht klappt">Anmeldung klappt nicht? Mit Code anmelden</button>
+    </div>
+    <div id="ms-bereich">${S.ms_anmeldung && S.ms_anmeldung.status === "fehler" ? `<div class="meldung fehler">${esc(S.ms_anmeldung.meldung)}</div>` : ""}</div>
+  </div>
+  <div class="karte formular ${einrichtungTyp === "imap" ? "" : "versteckt"}">
+    <h2>Anderes Postfach</h2>
+    <label>Anbieter</label><select id="im-anbieter" onchange="imapHinweis()">${opt}</select>
+    <div class="tipp" id="im-hinweis"></div>
+    <label>E-Mail-Adresse</label><input id="im-benutzer" type="email" value="${esc(e.imap_benutzer || "")}" autocomplete="username">
+    <label>Passwort bzw. App-Passwort</label><input id="im-passwort" type="password" autocomplete="current-password">
+    <div id="im-server" class="reihe">
+      <div><label>IMAP-Server</label><input id="im-host" value="${esc(e.imap_host || "")}"></div>
+      <div><label>Port</label><input id="im-port" type="number" value="${esc(e.imap_port || 993)}"></div>
+    </div>
+    <div style="margin-top:16px"><button class="knopf haupt gross" id="im-knopf" onclick="imapVerbinden()">Verbinden &amp; testen</button></div>
+    <div id="im-meldung"></div>
+  </div>`;
+  if (einrichtungTyp === "imap") imapHinweis();
+  if (S.ms_anmeldung && S.ms_anmeldung.status === "warten") msZeigen(S.ms_anmeldung);
+}
+function imapHinweis() {
+  const a = (S.imap_anbieter || {})[$("im-anbieter").value] || {};
+  $("im-hinweis").textContent = a.hinweis || "Server-Daten bekommen Sie von Ihrem Mail-Anbieter.";
+  if (a.host) $("im-host").value = a.host;
+  if (a.port) $("im-port").value = a.port;
+  $("im-server").classList.toggle("versteckt", $("im-anbieter").value !== "andere");
+}
+async function imapVerbinden() {
+  const knopf = $("im-knopf"); knopf.disabled = true; knopf.textContent = "Verbinde …";
+  $("im-meldung").innerHTML = "";
+  try {
+    const j = await api("/api/imap/verbinden", {anbieter: $("im-anbieter").value, benutzer: $("im-benutzer").value, passwort: $("im-passwort").value, host: $("im-host").value, port: $("im-port").value, ssl: true});
+    $("im-meldung").innerHTML = `<div class="meldung ok">✓ Verbunden. Entwürfe-Ordner: ${esc(j.entwuerfe)}</div>`;
+    await start();
+  } catch (e) { $("im-meldung").innerHTML = `<div class="meldung fehler">${esc(e.message)}</div>`; }
+  knopf.disabled = false; knopf.textContent = "Verbinden & testen";
+}
+async function msBrowser() {
+  try {
+    const j = await api("/api/ms/browser", {ms_client_id: $("ms-client").value, ms_tenant_id: $("ms-tenant").value});
+    window.location.href = j.url;
+  } catch (e) { $("ms-bereich").innerHTML = `<div class="meldung fehler">${esc(e.message)}</div>`; }
+}
+async function msStart() {
+  $("ms-bereich").innerHTML = "";
+  try {
+    const j = await api("/api/ms/start", {ms_client_id: $("ms-client").value, ms_tenant_id: $("ms-tenant").value});
+    msZeigen(j.anmeldung);
+  } catch (e) { $("ms-bereich").innerHTML = `<div class="meldung fehler">${esc(e.message)}</div>`; }
+}
+function msZeigen(a) {
+  $("ms-bereich").innerHTML = `<p style="margin-top:18px"><b>1.</b> Diesen Code kopieren:</p><div class="code">${esc(a.code)}</div>
+    <p><b>2.</b> Anmeldeseite öffnen, Code einfügen und mit dem Microsoft-Konto von <b>kontakt@ath-abdichtungen.de</b> anmelden. Bei der Frage nach Berechtigungen auf „Akzeptieren“ klicken.</p>
+    <button class="knopf haupt" onclick="kopieren('${esc(a.code)}');window.open('${esc(a.url)}','_blank')">Code kopieren &amp; Anmeldeseite öffnen</button>
+    <div class="meldung" id="ms-status" style="background:#f2f5f8">⏳ Warte auf Anmeldung …</div>`;
+  clearInterval(pollTimer);
+  pollTimer = setInterval(async () => {
+    try {
+      const j = await api("/api/ms/status");
+      if (j.anmeldung.status === "ok") { clearInterval(pollTimer); $("ms-status").className = "meldung ok"; $("ms-status").textContent = "✓ Angemeldet als " + j.anmeldung.email; setTimeout(start, 800); }
+      else if (j.anmeldung.status === "fehler") { clearInterval(pollTimer); $("ms-status").className = "meldung fehler"; $("ms-status").textContent = j.anmeldung.meldung; }
+    } catch (e) { clearInterval(pollTimer); }
+  }, 2000);
+}
+
+// ---------------------------------------------------------------- Einstellungen
+function einstellungenOeffnen() {
+  const e = S.einstellungen || {};
+  $("dialog-inhalt").innerHTML = `
+    <h2>Einstellungen</h2>
+    <h3>Absender &amp; Signatur</h3>
+    <div class="reihe"><div><label>Name</label><input id="s-name" value="${esc(e.absender_name)}"></div>
+    <div><label>Eigene Telefonnummer</label><input id="s-tel" value="${esc(e.telefon)}"></div></div>
+    <label>Signatur (wird unter jeden Entwurf gesetzt)</label><textarea id="s-sig" rows="7">${esc(e.signatur)}</textarea>
+    <h3>Steuerberater</h3>
+    <div class="tipp">Mails vom Steuerberater werden erkannt. Eingangsrechnungen und Behördenpost werden als Weiterleitungs-Entwurf an ihn vorbereitet (inkl. Anhänge).</div>
+    <div class="reihe"><div><label>Name</label><input id="s-stbname" value="${esc(e.steuerberater_name)}" placeholder="z. B. Frau Beispiel"></div>
+    <div><label>E-Mail</label><input id="s-stbmail" type="email" value="${esc(e.steuerberater_email)}" placeholder="kanzlei@…"></div></div>
+    <h3>KI-Entwürfe (optional)</h3>
+    <div class="tipp">Ohne KI arbeitet das Tool mit festen Textbausteinen. Mit KI (Anthropic Claude) werden die Entwürfe individuell auf jede Mail geschrieben – kostet grob 2–5 € im Monat. Dabei wird der Mailtext zur Auswertung an Anthropic übertragen.</div>
+    <label class="check"><input type="checkbox" id="s-ki" ${e.ki_aktiv ? "checked" : ""}> KI-Entwürfe verwenden</label>
+    <div class="reihe"><div><label>API-Schlüssel</label><input id="s-kikey" type="password" value="${S.ki_schluessel_gesetzt ? "********" : ""}" placeholder="sk-ant-…"></div>
+    <div><label>Modell</label><input id="s-kimodell" value="${esc(e.ki_modell)}"></div></div>
+    <div style="margin-top:8px"><button class="knopf klein" onclick="kiTesten()">Verbindung testen</button> <span id="s-kitest" class="tipp"></span></div>
+    <h3>Abruf</h3>
+    <div class="reihe"><div><label>Mails der letzten … Tage</label><input id="s-tage" type="number" min="1" max="120" value="${esc(e.tage_zurueck)}"></div>
+    <div><label>Höchstens … Mails</label><input id="s-max" type="number" min="10" max="500" value="${esc(e.max_mails)}"></div></div>
+    <label class="check"><input type="checkbox" id="s-auto" ${e.auto_handy ? "checked" : ""}> Fertige Entwürfe (ohne offene [Platzhalter]) automatisch in den Entwürfe-Ordner legen</label>
+    <h3>Postfach</h3>
+    <div class="tipp">Verbunden: <b>${esc(S.konto || "–")}</b> (${S.konto_typ === "microsoft" ? "Microsoft 365" : S.konto_typ === "imap" ? "IMAP" : "nicht verbunden"})</div>
+    ${S.konto_typ === "imap" ? `<label>Entwürfe-Ordner (leer = automatisch)</label><input id="s-ordner" value="${esc(e.imap_entwuerfe || "")}">` : ""}
+    <div style="margin-top:10px"><button class="knopf klein gefahr" onclick="abmelden()">Postfach trennen</button></div>
+    <div class="dialog-fuss"><button class="knopf" onclick="dialogZu()">Abbrechen</button><button class="knopf haupt" onclick="einstellungenSpeichern()">Speichern</button></div>`;
+  $("dialog").classList.remove("versteckt");
+}
+function dialogZu() { $("dialog").classList.add("versteckt"); }
+async function einstellungenSpeichern() {
+  const d = {absender_name: $("s-name").value, telefon: $("s-tel").value, signatur: $("s-sig").value,
+    steuerberater_name: $("s-stbname").value, steuerberater_email: $("s-stbmail").value,
+    ki_aktiv: $("s-ki").checked, ki_schluessel: $("s-kikey").value, ki_modell: $("s-kimodell").value,
+    tage_zurueck: $("s-tage").value, max_mails: $("s-max").value, auto_handy: $("s-auto").checked};
+  if ($("s-ordner")) d.imap_entwuerfe = $("s-ordner").value;
+  try { const j = await api("/api/einstellungen", d); Object.assign(S, j); dialogZu(); toast("Gespeichert."); if (aktiveMail) detailZeichnen(); }
+  catch (e) { toast(e.message, true); }
+}
+async function kiTesten() {
+  $("s-kitest").textContent = "teste …";
+  try {
+    await api("/api/einstellungen", {ki_schluessel: $("s-kikey").value, ki_modell: $("s-kimodell").value});
+    await api("/api/ki/test"); $("s-kitest").textContent = "✓ funktioniert";
+  } catch (e) { $("s-kitest").textContent = "✕ " + e.message; }
+}
+async function abmelden() {
+  if (!confirm("Postfach wirklich trennen? Gespeicherte Zugangsdaten und die Übersicht werden gelöscht. (Ihre Mails im Postfach bleiben unberührt.)")) return;
+  await api("/api/abmelden"); dialogZu(); await statusLaden(); zeigeEinrichtung();
+}
+
+// ---------------------------------------------------------------- Start
+async function start() {
+  try {
+    await statusLaden();
+    if (!S.konto_typ) { zeigeEinrichtung(); return; }
+    $("ansicht-einrichtung").classList.add("versteckt");
+    $("ansicht-haupt").classList.remove("versteckt");
+    await listeLaden();
+    aktualisieren(true);
+  } catch (e) { toast(e.message, true); }
+}
+setInterval(() => { if (S.konto_typ && !(S.job || {}).laeuft && document.visibilityState === "visible") aktualisieren(true); }, 10 * 60 * 1000);
+start();
+</script>
+</body>
+</html>
